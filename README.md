@@ -1,2 +1,2 @@
 # Text-and-Image-translator
-allowing text translation and support image translation by uploading
+A text and image(still working on it) translator in React
