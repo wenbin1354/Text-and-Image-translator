@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Form, TextArea, Button, Icon } from "semantic-ui-react";
-import axios from "axios";
+import { setCORS} from "google-translate-api-browser";
+import languageList from "./language_list.json";
 
 function Header() {
 	return (
@@ -11,6 +12,9 @@ function Header() {
 }
 
 function Body() {
+	// setting up cors-anywhere server address
+	const translate = setCORS("http://cors-anywhere.herokuapp.com/");
+
 	// store user inputted text
 	const [inputText, setInputText] = useState("");
 
@@ -20,56 +24,23 @@ function Body() {
 	// store the language to translate to
 	const [selectedLanguageKey, setSelectedLanguageKey] = useState("");
 
-	// store the option of languages
-	const [languagesList, setLanguagesList] = useState([]);
-
-	// store the auto detected language user is using
-	const [detectLanguageKey, setDetectedLanguageKey] = useState("");
-
-	// detect the language of input
-	const getLanguageSource = () => {
-		axios
-			.post(`https://libretranslate.de/detect`, {
-				q: inputText,
-			})
-			.then((response) => {
-				setDetectedLanguageKey(response.data[0].language);
-			})
-			.catch(function (error) {
-				console.log(error);
-			});
-	};
-
 	// translate the text to other language
 	const translateText = () => {
 		setResultText(inputText);
 
-		getLanguageSource();
-
-		let data = {
-			q: inputText,
-			source: detectLanguageKey,
-			target: selectedLanguageKey,
-		};
-		axios.post(`https://libretranslate.de/translate`, data).then((response) => {
-			setResultText(response.data.translatedText);
-		});
+		translate(inputText, { to: selectedLanguageKey })
+			.then((res) => {
+				setResultText(res.text);
+			})
+			.catch((err) => {
+				console.error(err);
+			});
 	};
 
 	// get the language selected
 	const languageKey = (selectedLanguage) => {
 		setSelectedLanguageKey(selectedLanguage.target.value);
 	};
-
-	// useEffect hook
-	useEffect(() => {
-		axios.get(`https://libretranslate.de/languages`).then((response) => {
-			setLanguagesList(response.data);
-		});
-
-		getLanguageSource();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [inputText]);
 
 	return (
 		<div className="app-body">
@@ -84,10 +55,10 @@ function Body() {
 
 					<select className="language-select" onChange={languageKey}>
 						<option>Select A Language</option>
-						{languagesList.map((language, key) => {
+						{languageList.text.map((language, key) => {
 							return (
 								<option key={key} value={language.code}>
-									{language.name}
+									{language.language}
 								</option>
 							);
 						})}
